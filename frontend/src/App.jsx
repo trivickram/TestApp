@@ -150,7 +150,7 @@ export default function App() {
           <h2>Get Appointment Status</h2>
           <input
             placeholder="Appointment ID"
-            // value={appointmentID}
+            value={appointmentID}
             onChange={(e) => setAppointmentID(e.target.value)}
           />
           <button type="submit">Get Status</button>
@@ -161,7 +161,7 @@ export default function App() {
           <h2>Update Appointment Status</h2>
           <input
             placeholder="Appointment ID"
-            // value={appointmentID}
+            value={appointmentID}
             onChange={(e) => setAppointmentID(e.target.value)}
           />
           <select

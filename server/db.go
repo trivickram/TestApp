@@ -3,31 +3,41 @@ package main
 import (
 	"database/sql"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type store struct {
 	db *sql.DB
 }
 
-func newStore(path string) (*store, error) {
-	db, err := sql.Open("sqlite", path)
+func newStore(dsn string) (*store, error) {
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
+		return nil, err
+	}
+	if err := db.Ping(); err != nil {
 		return nil, err
 	}
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS patients (
-			id TEXT PRIMARY KEY,
-			name TEXT NOT NULL,
-			age INTEGER NOT NULL
-		);
+			id VARCHAR(36) PRIMARY KEY,
+			name VARCHAR(255) NOT NULL,
+			age INT NOT NULL
+		)
+	`)
+	if err != nil {
+		return nil, err
+	}
+	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS appointments (
-			id TEXT PRIMARY KEY,
-			patient_id TEXT NOT NULL,
-			doctor TEXT NOT NULL,
-			scheduled_at TEXT NOT NULL,
-			status TEXT NOT NULL
-		);
+			id VARCHAR(36) PRIMARY KEY,
+			patient_id VARCHAR(36) NOT NULL,
+			doctor VARCHAR(255) NOT NULL,
+			scheduled_at VARCHAR(255) NOT NULL,
+			status VARCHAR(50) NOT NULL,
+			INDEX idx_patient_id (patient_id),
+			INDEX idx_status (status)
+		)
 	`)
 	if err != nil {
 		return nil, err

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 
 	pb "hospital/generated/proto"
 
@@ -115,7 +116,12 @@ func (s *server) UpdateAppointmentStatus(_ context.Context, req *pb.UpdateAppoin
 }
 
 func main() {
-	st, err := newStore("hospital.db")
+	dsn := os.Getenv("DB_DSN")
+	if dsn == "" {
+		dsn = "root:password@tcp(localhost:3306)/hospital?parseTime=true"
+	}
+
+	st, err := newStore(dsn)
 	if err != nil {
 		log.Fatal(err)
 	}

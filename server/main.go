@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net"
-	"sync"
 
 	pb "hospital/generated/proto"
 
@@ -16,16 +15,7 @@ import (
 
 type server struct {
 	pb.UnimplementedHospitalServiceServer
-	mu           sync.RWMutex
-	patients     map[string]*pb.Patient
-	appointments map[string]*pb.Appointment
-}
-
-func newServer() *server {
-	return &server{
-		patients:     map[string]*pb.Patient{},
-		appointments: map[string]*pb.Appointment{},
-	}
+	store *store
 }
 
 func (s *server) CreatePatient(_ context.Context, req *pb.CreatePatientRequest) (*pb.Patient, error) {
@@ -42,9 +32,9 @@ func (s *server) CreatePatient(_ context.Context, req *pb.CreatePatientRequest) 
 		Age:  req.GetAge(),
 	}
 
-	s.mu.Lock()
-	s.patients[patient.GetId()] = patient
-	s.mu.Unlock()
+	if err := s.store.insertPatient(patient.Id, patient.Name, patient.Age); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to save patient")
+	}
 
 	return patient, nil
 }
@@ -60,10 +50,11 @@ func (s *server) ScheduleAppointment(_ context.Context, req *pb.ScheduleAppointm
 		return nil, status.Errorf(codes.InvalidArgument, "scheduled_at is required")
 	}
 
-	s.mu.RLock()
-	_, ok := s.patients[req.GetPatientId()]
-	s.mu.RUnlock()
-	if !ok {
+	exists, err := s.store.patientExists(req.GetPatientId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	if !exists {
 		return nil, status.Errorf(codes.NotFound, "patient not found")
 	}
 
@@ -75,9 +66,9 @@ func (s *server) ScheduleAppointment(_ context.Context, req *pb.ScheduleAppointm
 		Status:      "SCHEDULED",
 	}
 
-	s.mu.Lock()
-	s.appointments[appointment.GetId()] = appointment
-	s.mu.Unlock()
+	if err := s.store.insertAppointment(appointment.Id, appointment.PatientId, appointment.Doctor, appointment.ScheduledAt, appointment.Status); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to save appointment")
+	}
 
 	return appointment, nil
 }
@@ -87,16 +78,17 @@ func (s *server) GetAppointmentStatus(_ context.Context, req *pb.GetAppointmentS
 		return nil, status.Errorf(codes.InvalidArgument, "appointment_id is required")
 	}
 
-	s.mu.RLock()
-	appointment, ok := s.appointments[req.GetAppointmentId()]
-	s.mu.RUnlock()
-	if !ok {
+	st, found, err := s.store.getAppointmentStatus(req.GetAppointmentId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	if !found {
 		return nil, status.Errorf(codes.NotFound, "appointment not found")
 	}
 
 	return &pb.AppointmentStatus{
-		AppointmentId: appointment.GetId(),
-		Status:        appointment.GetStatus(),
+		AppointmentId: req.GetAppointmentId(),
+		Status:        st,
 	}, nil
 }
 
@@ -108,29 +100,33 @@ func (s *server) UpdateAppointmentStatus(_ context.Context, req *pb.UpdateAppoin
 		return nil, status.Errorf(codes.InvalidArgument, "status is required")
 	}
 
-	s.mu.Lock()
-	appointment, ok := s.appointments[req.GetAppointmentId()]
-	if !ok {
-		s.mu.Unlock()
+	updated, err := s.store.updateAppointmentStatus(req.GetAppointmentId(), req.GetStatus())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	if !updated {
 		return nil, status.Errorf(codes.NotFound, "appointment not found")
 	}
-	appointment.Status = req.GetStatus()
-	s.mu.Unlock()
 
 	return &pb.AppointmentStatus{
-		AppointmentId: appointment.GetId(),
-		Status:        appointment.GetStatus(),
+		AppointmentId: req.GetAppointmentId(),
+		Status:        req.GetStatus(),
 	}, nil
 }
 
 func main() {
+	st, err := newStore("hospital.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterHospitalServiceServer(grpcServer, newServer())
+	pb.RegisterHospitalServiceServer(grpcServer, &server{store: st})
 
 	log.Println("grpc server listening on :50051")
 	if err := grpcServer.Serve(lis); err != nil {

@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package hospital;
+
+option go_package = "hospital/generated/proto";
+
+message CreatePatientRequest {
+	string name = 1;
+	int32 age = 2;
+}
+
+message Patient {
+	string id = 1;
+	string name = 2;
+	int32 age = 3;
+}
+
+message ScheduleAppointmentRequest {
+	string patient_id = 1;
+	string doctor = 2;
+	string scheduled_at = 3;
+}
+
+message Appointment {
+	string id = 1;
+	string patient_id = 2;
+	string doctor = 3;
+	string scheduled_at = 4;
+	string status = 5;
+}
+
+message GetAppointmentStatusRequest {
+	string appointment_id = 1;
+}
+
+message AppointmentStatus {
+	string appointment_id = 1;
+	string status = 2;
+}
+
+message UpdateAppointmentStatusRequest {
+	string appointment_id = 1;
+	string status = 2;
+}
+
+service HospitalService {
+	rpc CreatePatient(CreatePatientRequest) returns (Patient);
+	rpc ScheduleAppointment(ScheduleAppointmentRequest) returns (Appointment);
+	rpc GetAppointmentStatus(GetAppointmentStatusRequest) returns (AppointmentStatus);
+	rpc UpdateAppointmentStatus(UpdateAppointmentStatusRequest) returns (AppointmentStatus);
+}

@@ -10,6 +10,7 @@ import (
 	pb "hospital/generated/proto"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 )
@@ -47,7 +48,23 @@ func grpcError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusInternalServerError, errBody{Error: "internal error"})
 		return
 	}
-	writeJSON(w, http.StatusBadRequest, errBody{Error: st.Message()})
+	httpCode := grpcCodeToHTTP(st.Code())
+	writeJSON(w, httpCode, errBody{Error: st.Message()})
+}
+
+func grpcCodeToHTTP(c codes.Code) int {
+	switch c {
+	case codes.InvalidArgument:
+		return http.StatusBadRequest
+	case codes.NotFound:
+		return http.StatusNotFound
+	case codes.AlreadyExists:
+		return http.StatusConflict
+	case codes.Unavailable:
+		return http.StatusServiceUnavailable
+	default:
+		return http.StatusInternalServerError
+	}
 }
 
 func (g *gateway) createPatient(w http.ResponseWriter, r *http.Request) {

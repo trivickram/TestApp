@@ -4,48 +4,105 @@ package hospital;
 
 option go_package = "hospital/generated/proto";
 
+message Empty {}
+
+message Clinic {
+	int64 id = 1;
+	string name = 2;
+}
+
+message ListClinicsResponse {
+	repeated Clinic clinics = 1;
+}
+
+message Doctor {
+	int64 id = 1;
+	string name = 2;
+	string specialization = 3;
+}
+
+message CreateDoctorRequest {
+	string name = 1;
+	string specialization = 2;
+}
+
+message ListDoctorsResponse {
+	repeated Doctor doctors = 1;
+}
+
+message LinkDoctorRequest {
+	int64 clinic_id = 1;
+	int64 doctor_id = 2;
+}
+
+message ListClinicDoctorsRequest {
+	int64 clinic_id = 1;
+}
+
+message Patient {
+	int64 id = 1;
+	string name = 2;
+	int32 age = 3;
+}
+
 message CreatePatientRequest {
 	string name = 1;
 	int32 age = 2;
 }
 
-message Patient {
-	string id = 1;
-	string name = 2;
-	int32 age = 3;
+message ListPatientsResponse {
+	repeated Patient patients = 1;
 }
 
-message ScheduleAppointmentRequest {
-	string patient_id = 1;
-	string doctor = 2;
-	string scheduled_at = 3;
+message ListClinicPatientsRequest {
+	int64 clinic_id = 1;
+}
+
+message SearchDoctorsRequest {
+	string query = 1;
+	int64 clinic_id = 2;
+}
+
+message SearchPatientsRequest {
+	string query = 1;
 }
 
 message Appointment {
-	string id = 1;
-	string patient_id = 2;
-	string doctor = 3;
+	int64 id = 1;
+	int64 clinic_id = 2;
+	int64 doctor_id = 3;
+	int64 patient_id = 4;
+	string scheduled_at = 5;
+	string status = 6;
+}
+
+message ScheduleAppointmentRequest {
+	int64 clinic_id = 1;
+	int64 doctor_id = 2;
+	int64 patient_id = 3;
 	string scheduled_at = 4;
-	string status = 5;
 }
 
-message GetAppointmentStatusRequest {
-	string appointment_id = 1;
+message ListAppointmentsRequest {
+	int64 clinic_id = 1;
+	int64 doctor_id = 2;
+	int64 patient_id = 3;
+	string date = 4;
 }
 
-message AppointmentStatus {
-	string appointment_id = 1;
-	string status = 2;
-}
-
-message UpdateAppointmentStatusRequest {
-	string appointment_id = 1;
-	string status = 2;
+message ListAppointmentsResponse {
+	repeated Appointment appointments = 1;
 }
 
 service HospitalService {
+	rpc ListClinics(Empty) returns (ListClinicsResponse);
 	rpc CreatePatient(CreatePatientRequest) returns (Patient);
+	rpc CreateDoctor(CreateDoctorRequest) returns (Doctor);
+	rpc LinkDoctorToClinic(LinkDoctorRequest) returns (Empty);
+	rpc ListClinicDoctors(ListClinicDoctorsRequest) returns (ListDoctorsResponse);
+	rpc ListClinicPatients(ListClinicPatientsRequest) returns (ListPatientsResponse);
 	rpc ScheduleAppointment(ScheduleAppointmentRequest) returns (Appointment);
-	rpc GetAppointmentStatus(GetAppointmentStatusRequest) returns (AppointmentStatus);
-	rpc UpdateAppointmentStatus(UpdateAppointmentStatusRequest) returns (AppointmentStatus);
+	rpc ListAppointments(ListAppointmentsRequest) returns (ListAppointmentsResponse);
+	rpc SearchDoctors(SearchDoctorsRequest) returns (ListDoctorsResponse);
+	rpc SearchPatients(SearchPatientsRequest) returns (ListPatientsResponse);
 }

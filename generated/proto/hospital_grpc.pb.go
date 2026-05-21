@@ -19,20 +19,32 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	HospitalService_CreatePatient_FullMethodName           = "/hospital.HospitalService/CreatePatient"
-	HospitalService_ScheduleAppointment_FullMethodName     = "/hospital.HospitalService/ScheduleAppointment"
-	HospitalService_GetAppointmentStatus_FullMethodName    = "/hospital.HospitalService/GetAppointmentStatus"
-	HospitalService_UpdateAppointmentStatus_FullMethodName = "/hospital.HospitalService/UpdateAppointmentStatus"
+	HospitalService_ListClinics_FullMethodName         = "/hospital.HospitalService/ListClinics"
+	HospitalService_CreatePatient_FullMethodName       = "/hospital.HospitalService/CreatePatient"
+	HospitalService_CreateDoctor_FullMethodName        = "/hospital.HospitalService/CreateDoctor"
+	HospitalService_LinkDoctorToClinic_FullMethodName  = "/hospital.HospitalService/LinkDoctorToClinic"
+	HospitalService_ListClinicDoctors_FullMethodName   = "/hospital.HospitalService/ListClinicDoctors"
+	HospitalService_ListClinicPatients_FullMethodName  = "/hospital.HospitalService/ListClinicPatients"
+	HospitalService_ScheduleAppointment_FullMethodName = "/hospital.HospitalService/ScheduleAppointment"
+	HospitalService_ListAppointments_FullMethodName    = "/hospital.HospitalService/ListAppointments"
+	HospitalService_SearchDoctors_FullMethodName       = "/hospital.HospitalService/SearchDoctors"
+	HospitalService_SearchPatients_FullMethodName      = "/hospital.HospitalService/SearchPatients"
 )
 
 // HospitalServiceClient is the client API for HospitalService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HospitalServiceClient interface {
+	ListClinics(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListClinicsResponse, error)
 	CreatePatient(ctx context.Context, in *CreatePatientRequest, opts ...grpc.CallOption) (*Patient, error)
+	CreateDoctor(ctx context.Context, in *CreateDoctorRequest, opts ...grpc.CallOption) (*Doctor, error)
+	LinkDoctorToClinic(ctx context.Context, in *LinkDoctorRequest, opts ...grpc.CallOption) (*Empty, error)
+	ListClinicDoctors(ctx context.Context, in *ListClinicDoctorsRequest, opts ...grpc.CallOption) (*ListDoctorsResponse, error)
+	ListClinicPatients(ctx context.Context, in *ListClinicPatientsRequest, opts ...grpc.CallOption) (*ListPatientsResponse, error)
 	ScheduleAppointment(ctx context.Context, in *ScheduleAppointmentRequest, opts ...grpc.CallOption) (*Appointment, error)
-	GetAppointmentStatus(ctx context.Context, in *GetAppointmentStatusRequest, opts ...grpc.CallOption) (*AppointmentStatus, error)
-	UpdateAppointmentStatus(ctx context.Context, in *UpdateAppointmentStatusRequest, opts ...grpc.CallOption) (*AppointmentStatus, error)
+	ListAppointments(ctx context.Context, in *ListAppointmentsRequest, opts ...grpc.CallOption) (*ListAppointmentsResponse, error)
+	SearchDoctors(ctx context.Context, in *SearchDoctorsRequest, opts ...grpc.CallOption) (*ListDoctorsResponse, error)
+	SearchPatients(ctx context.Context, in *SearchPatientsRequest, opts ...grpc.CallOption) (*ListPatientsResponse, error)
 }
 
 type hospitalServiceClient struct {
@@ -43,10 +55,60 @@ func NewHospitalServiceClient(cc grpc.ClientConnInterface) HospitalServiceClient
 	return &hospitalServiceClient{cc}
 }
 
+func (c *hospitalServiceClient) ListClinics(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListClinicsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListClinicsResponse)
+	err := c.cc.Invoke(ctx, HospitalService_ListClinics_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *hospitalServiceClient) CreatePatient(ctx context.Context, in *CreatePatientRequest, opts ...grpc.CallOption) (*Patient, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Patient)
 	err := c.cc.Invoke(ctx, HospitalService_CreatePatient_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hospitalServiceClient) CreateDoctor(ctx context.Context, in *CreateDoctorRequest, opts ...grpc.CallOption) (*Doctor, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Doctor)
+	err := c.cc.Invoke(ctx, HospitalService_CreateDoctor_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hospitalServiceClient) LinkDoctorToClinic(ctx context.Context, in *LinkDoctorRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, HospitalService_LinkDoctorToClinic_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hospitalServiceClient) ListClinicDoctors(ctx context.Context, in *ListClinicDoctorsRequest, opts ...grpc.CallOption) (*ListDoctorsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListDoctorsResponse)
+	err := c.cc.Invoke(ctx, HospitalService_ListClinicDoctors_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hospitalServiceClient) ListClinicPatients(ctx context.Context, in *ListClinicPatientsRequest, opts ...grpc.CallOption) (*ListPatientsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPatientsResponse)
+	err := c.cc.Invoke(ctx, HospitalService_ListClinicPatients_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,20 +125,30 @@ func (c *hospitalServiceClient) ScheduleAppointment(ctx context.Context, in *Sch
 	return out, nil
 }
 
-func (c *hospitalServiceClient) GetAppointmentStatus(ctx context.Context, in *GetAppointmentStatusRequest, opts ...grpc.CallOption) (*AppointmentStatus, error) {
+func (c *hospitalServiceClient) ListAppointments(ctx context.Context, in *ListAppointmentsRequest, opts ...grpc.CallOption) (*ListAppointmentsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AppointmentStatus)
-	err := c.cc.Invoke(ctx, HospitalService_GetAppointmentStatus_FullMethodName, in, out, cOpts...)
+	out := new(ListAppointmentsResponse)
+	err := c.cc.Invoke(ctx, HospitalService_ListAppointments_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *hospitalServiceClient) UpdateAppointmentStatus(ctx context.Context, in *UpdateAppointmentStatusRequest, opts ...grpc.CallOption) (*AppointmentStatus, error) {
+func (c *hospitalServiceClient) SearchDoctors(ctx context.Context, in *SearchDoctorsRequest, opts ...grpc.CallOption) (*ListDoctorsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AppointmentStatus)
-	err := c.cc.Invoke(ctx, HospitalService_UpdateAppointmentStatus_FullMethodName, in, out, cOpts...)
+	out := new(ListDoctorsResponse)
+	err := c.cc.Invoke(ctx, HospitalService_SearchDoctors_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hospitalServiceClient) SearchPatients(ctx context.Context, in *SearchPatientsRequest, opts ...grpc.CallOption) (*ListPatientsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPatientsResponse)
+	err := c.cc.Invoke(ctx, HospitalService_SearchPatients_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,10 +159,16 @@ func (c *hospitalServiceClient) UpdateAppointmentStatus(ctx context.Context, in 
 // All implementations must embed UnimplementedHospitalServiceServer
 // for forward compatibility
 type HospitalServiceServer interface {
+	ListClinics(context.Context, *Empty) (*ListClinicsResponse, error)
 	CreatePatient(context.Context, *CreatePatientRequest) (*Patient, error)
+	CreateDoctor(context.Context, *CreateDoctorRequest) (*Doctor, error)
+	LinkDoctorToClinic(context.Context, *LinkDoctorRequest) (*Empty, error)
+	ListClinicDoctors(context.Context, *ListClinicDoctorsRequest) (*ListDoctorsResponse, error)
+	ListClinicPatients(context.Context, *ListClinicPatientsRequest) (*ListPatientsResponse, error)
 	ScheduleAppointment(context.Context, *ScheduleAppointmentRequest) (*Appointment, error)
-	GetAppointmentStatus(context.Context, *GetAppointmentStatusRequest) (*AppointmentStatus, error)
-	UpdateAppointmentStatus(context.Context, *UpdateAppointmentStatusRequest) (*AppointmentStatus, error)
+	ListAppointments(context.Context, *ListAppointmentsRequest) (*ListAppointmentsResponse, error)
+	SearchDoctors(context.Context, *SearchDoctorsRequest) (*ListDoctorsResponse, error)
+	SearchPatients(context.Context, *SearchPatientsRequest) (*ListPatientsResponse, error)
 	mustEmbedUnimplementedHospitalServiceServer()
 }
 
@@ -98,17 +176,35 @@ type HospitalServiceServer interface {
 type UnimplementedHospitalServiceServer struct {
 }
 
+func (UnimplementedHospitalServiceServer) ListClinics(context.Context, *Empty) (*ListClinicsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListClinics not implemented")
+}
 func (UnimplementedHospitalServiceServer) CreatePatient(context.Context, *CreatePatientRequest) (*Patient, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreatePatient not implemented")
+}
+func (UnimplementedHospitalServiceServer) CreateDoctor(context.Context, *CreateDoctorRequest) (*Doctor, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateDoctor not implemented")
+}
+func (UnimplementedHospitalServiceServer) LinkDoctorToClinic(context.Context, *LinkDoctorRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LinkDoctorToClinic not implemented")
+}
+func (UnimplementedHospitalServiceServer) ListClinicDoctors(context.Context, *ListClinicDoctorsRequest) (*ListDoctorsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListClinicDoctors not implemented")
+}
+func (UnimplementedHospitalServiceServer) ListClinicPatients(context.Context, *ListClinicPatientsRequest) (*ListPatientsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListClinicPatients not implemented")
 }
 func (UnimplementedHospitalServiceServer) ScheduleAppointment(context.Context, *ScheduleAppointmentRequest) (*Appointment, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ScheduleAppointment not implemented")
 }
-func (UnimplementedHospitalServiceServer) GetAppointmentStatus(context.Context, *GetAppointmentStatusRequest) (*AppointmentStatus, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAppointmentStatus not implemented")
+func (UnimplementedHospitalServiceServer) ListAppointments(context.Context, *ListAppointmentsRequest) (*ListAppointmentsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAppointments not implemented")
 }
-func (UnimplementedHospitalServiceServer) UpdateAppointmentStatus(context.Context, *UpdateAppointmentStatusRequest) (*AppointmentStatus, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateAppointmentStatus not implemented")
+func (UnimplementedHospitalServiceServer) SearchDoctors(context.Context, *SearchDoctorsRequest) (*ListDoctorsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchDoctors not implemented")
+}
+func (UnimplementedHospitalServiceServer) SearchPatients(context.Context, *SearchPatientsRequest) (*ListPatientsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchPatients not implemented")
 }
 func (UnimplementedHospitalServiceServer) mustEmbedUnimplementedHospitalServiceServer() {}
 
@@ -121,6 +217,24 @@ type UnsafeHospitalServiceServer interface {
 
 func RegisterHospitalServiceServer(s grpc.ServiceRegistrar, srv HospitalServiceServer) {
 	s.RegisterService(&HospitalService_ServiceDesc, srv)
+}
+
+func _HospitalService_ListClinics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HospitalServiceServer).ListClinics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HospitalService_ListClinics_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HospitalServiceServer).ListClinics(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _HospitalService_CreatePatient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -137,6 +251,78 @@ func _HospitalService_CreatePatient_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(HospitalServiceServer).CreatePatient(ctx, req.(*CreatePatientRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HospitalService_CreateDoctor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateDoctorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HospitalServiceServer).CreateDoctor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HospitalService_CreateDoctor_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HospitalServiceServer).CreateDoctor(ctx, req.(*CreateDoctorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HospitalService_LinkDoctorToClinic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LinkDoctorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HospitalServiceServer).LinkDoctorToClinic(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HospitalService_LinkDoctorToClinic_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HospitalServiceServer).LinkDoctorToClinic(ctx, req.(*LinkDoctorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HospitalService_ListClinicDoctors_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListClinicDoctorsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HospitalServiceServer).ListClinicDoctors(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HospitalService_ListClinicDoctors_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HospitalServiceServer).ListClinicDoctors(ctx, req.(*ListClinicDoctorsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HospitalService_ListClinicPatients_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListClinicPatientsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HospitalServiceServer).ListClinicPatients(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HospitalService_ListClinicPatients_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HospitalServiceServer).ListClinicPatients(ctx, req.(*ListClinicPatientsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -159,38 +345,56 @@ func _HospitalService_ScheduleAppointment_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HospitalService_GetAppointmentStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAppointmentStatusRequest)
+func _HospitalService_ListAppointments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAppointmentsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HospitalServiceServer).GetAppointmentStatus(ctx, in)
+		return srv.(HospitalServiceServer).ListAppointments(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: HospitalService_GetAppointmentStatus_FullMethodName,
+		FullMethod: HospitalService_ListAppointments_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HospitalServiceServer).GetAppointmentStatus(ctx, req.(*GetAppointmentStatusRequest))
+		return srv.(HospitalServiceServer).ListAppointments(ctx, req.(*ListAppointmentsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HospitalService_UpdateAppointmentStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateAppointmentStatusRequest)
+func _HospitalService_SearchDoctors_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchDoctorsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HospitalServiceServer).UpdateAppointmentStatus(ctx, in)
+		return srv.(HospitalServiceServer).SearchDoctors(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: HospitalService_UpdateAppointmentStatus_FullMethodName,
+		FullMethod: HospitalService_SearchDoctors_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HospitalServiceServer).UpdateAppointmentStatus(ctx, req.(*UpdateAppointmentStatusRequest))
+		return srv.(HospitalServiceServer).SearchDoctors(ctx, req.(*SearchDoctorsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HospitalService_SearchPatients_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchPatientsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HospitalServiceServer).SearchPatients(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HospitalService_SearchPatients_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HospitalServiceServer).SearchPatients(ctx, req.(*SearchPatientsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -203,20 +407,44 @@ var HospitalService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*HospitalServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "ListClinics",
+			Handler:    _HospitalService_ListClinics_Handler,
+		},
+		{
 			MethodName: "CreatePatient",
 			Handler:    _HospitalService_CreatePatient_Handler,
+		},
+		{
+			MethodName: "CreateDoctor",
+			Handler:    _HospitalService_CreateDoctor_Handler,
+		},
+		{
+			MethodName: "LinkDoctorToClinic",
+			Handler:    _HospitalService_LinkDoctorToClinic_Handler,
+		},
+		{
+			MethodName: "ListClinicDoctors",
+			Handler:    _HospitalService_ListClinicDoctors_Handler,
+		},
+		{
+			MethodName: "ListClinicPatients",
+			Handler:    _HospitalService_ListClinicPatients_Handler,
 		},
 		{
 			MethodName: "ScheduleAppointment",
 			Handler:    _HospitalService_ScheduleAppointment_Handler,
 		},
 		{
-			MethodName: "GetAppointmentStatus",
-			Handler:    _HospitalService_GetAppointmentStatus_Handler,
+			MethodName: "ListAppointments",
+			Handler:    _HospitalService_ListAppointments_Handler,
 		},
 		{
-			MethodName: "UpdateAppointmentStatus",
-			Handler:    _HospitalService_UpdateAppointmentStatus_Handler,
+			MethodName: "SearchDoctors",
+			Handler:    _HospitalService_SearchDoctors_Handler,
+		},
+		{
+			MethodName: "SearchPatients",
+			Handler:    _HospitalService_SearchPatients_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

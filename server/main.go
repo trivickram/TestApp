@@ -8,7 +8,6 @@ import (
 
 	pb "hospital/generated/proto"
 
-	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -19,100 +18,162 @@ type server struct {
 	store *store
 }
 
+func (s *server) ListClinics(_ context.Context, _ *pb.Empty) (*pb.ListClinicsResponse, error) {
+	clinics, err := s.store.listClinics()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	resp := &pb.ListClinicsResponse{}
+	for _, c := range clinics {
+		resp.Clinics = append(resp.Clinics, &pb.Clinic{Id: c.id, Name: c.name})
+	}
+	return resp, nil
+}
+
 func (s *server) CreatePatient(_ context.Context, req *pb.CreatePatientRequest) (*pb.Patient, error) {
-	if req.GetName() == "" {
+	if req.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "name is required")
 	}
-	if req.GetAge() <= 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "age must be greater than 0")
+	if req.Age <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "age must be positive")
 	}
-
-	patient := &pb.Patient{
-		Id:   uuid.NewString(),
-		Name: req.GetName(),
-		Age:  req.GetAge(),
+	id, err := s.store.insertPatient(req.Name, req.Age)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
 	}
+	return &pb.Patient{Id: id, Name: req.Name, Age: req.Age}, nil
+}
 
-	if err := s.store.insertPatient(patient.Id, patient.Name, patient.Age); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to save patient")
+func (s *server) CreateDoctor(_ context.Context, req *pb.CreateDoctorRequest) (*pb.Doctor, error) {
+	if req.Name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "name is required")
 	}
+	id, err := s.store.insertDoctor(req.Name, req.Specialization)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	return &pb.Doctor{Id: id, Name: req.Name, Specialization: req.Specialization}, nil
+}
 
-	return patient, nil
+func (s *server) LinkDoctorToClinic(_ context.Context, req *pb.LinkDoctorRequest) (*pb.Empty, error) {
+	if req.ClinicId == 0 || req.DoctorId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "clinic_id and doctor_id are required")
+	}
+	if err := s.store.linkDoctor(req.ClinicId, req.DoctorId); err != nil {
+		if err == errAlreadyLinked {
+			return nil, status.Errorf(codes.AlreadyExists, "doctor already linked to this clinic")
+		}
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	return &pb.Empty{}, nil
+}
+
+func (s *server) ListClinicDoctors(_ context.Context, req *pb.ListClinicDoctorsRequest) (*pb.ListDoctorsResponse, error) {
+	doctors, err := s.store.listClinicDoctors(req.ClinicId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	resp := &pb.ListDoctorsResponse{}
+	for _, d := range doctors {
+		resp.Doctors = append(resp.Doctors, &pb.Doctor{Id: d.id, Name: d.name, Specialization: d.specialization})
+	}
+	return resp, nil
+}
+
+func (s *server) ListClinicPatients(_ context.Context, _ *pb.ListClinicPatientsRequest) (*pb.ListPatientsResponse, error) {
+	patients, err := s.store.listPatients()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	resp := &pb.ListPatientsResponse{}
+	for _, p := range patients {
+		resp.Patients = append(resp.Patients, &pb.Patient{Id: p.id, Name: p.name, Age: p.age})
+	}
+	return resp, nil
 }
 
 func (s *server) ScheduleAppointment(_ context.Context, req *pb.ScheduleAppointmentRequest) (*pb.Appointment, error) {
-	if req.GetPatientId() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "patient_id is required")
+	if req.ClinicId == 0 || req.DoctorId == 0 || req.PatientId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "clinic_id, doctor_id, and patient_id are required")
 	}
-	if req.GetDoctor() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "doctor is required")
-	}
-	if req.GetScheduledAt() == "" {
+	if req.ScheduledAt == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "scheduled_at is required")
 	}
 
-	exists, err := s.store.patientExists(req.GetPatientId())
+	dConflict, err := s.store.doctorConflict(req.DoctorId, req.ScheduledAt)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "db error")
 	}
-	if !exists {
-		return nil, status.Errorf(codes.NotFound, "patient not found")
+	if dConflict {
+		return nil, status.Errorf(codes.AlreadyExists, "doctor already has an appointment at that time")
 	}
 
-	appointment := &pb.Appointment{
-		Id:          uuid.NewString(),
-		PatientId:   req.GetPatientId(),
-		Doctor:      req.GetDoctor(),
-		ScheduledAt: req.GetScheduledAt(),
+	pConflict, err := s.store.patientConflict(req.PatientId, req.ScheduledAt)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	if pConflict {
+		return nil, status.Errorf(codes.AlreadyExists, "patient already has an appointment at that time")
+	}
+
+	id, err := s.store.insertAppointment(req.ClinicId, req.DoctorId, req.PatientId, req.ScheduledAt)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	return &pb.Appointment{
+		Id:          id,
+		ClinicId:    req.ClinicId,
+		DoctorId:    req.DoctorId,
+		PatientId:   req.PatientId,
+		ScheduledAt: req.ScheduledAt,
 		Status:      "SCHEDULED",
-	}
-
-	if err := s.store.insertAppointment(appointment.Id, appointment.PatientId, appointment.Doctor, appointment.ScheduledAt, appointment.Status); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to save appointment")
-	}
-
-	return appointment, nil
-}
-
-func (s *server) GetAppointmentStatus(_ context.Context, req *pb.GetAppointmentStatusRequest) (*pb.AppointmentStatus, error) {
-	if req.GetAppointmentId() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "appointment_id is required")
-	}
-
-	st, found, err := s.store.getAppointmentStatus(req.GetAppointmentId())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "db error")
-	}
-	if !found {
-		return nil, status.Errorf(codes.NotFound, "appointment not found")
-	}
-
-	return &pb.AppointmentStatus{
-		AppointmentId: req.GetAppointmentId(),
-		Status:        st,
 	}, nil
 }
 
-func (s *server) UpdateAppointmentStatus(_ context.Context, req *pb.UpdateAppointmentStatusRequest) (*pb.AppointmentStatus, error) {
-	if req.GetAppointmentId() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "appointment_id is required")
-	}
-	if req.GetStatus() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "status is required")
-	}
-
-	updated, err := s.store.updateAppointmentStatus(req.GetAppointmentId(), req.GetStatus())
+func (s *server) ListAppointments(_ context.Context, req *pb.ListAppointmentsRequest) (*pb.ListAppointmentsResponse, error) {
+	appts, err := s.store.listAppointments(req.ClinicId, req.DoctorId, req.PatientId, req.Date)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "db error")
 	}
-	if !updated {
-		return nil, status.Errorf(codes.NotFound, "appointment not found")
+	resp := &pb.ListAppointmentsResponse{}
+	for _, a := range appts {
+		resp.Appointments = append(resp.Appointments, &pb.Appointment{
+			Id:          a.id,
+			ClinicId:    a.clinicID,
+			DoctorId:    a.doctorID,
+			PatientId:   a.patientID,
+			ScheduledAt: a.scheduledAt,
+			Status:      a.status,
+		})
 	}
+	return resp, nil
+}
 
-	return &pb.AppointmentStatus{
-		AppointmentId: req.GetAppointmentId(),
-		Status:        req.GetStatus(),
-	}, nil
+func (s *server) SearchDoctors(_ context.Context, req *pb.SearchDoctorsRequest) (*pb.ListDoctorsResponse, error) {
+	doctors, err := s.store.searchDoctors(req.Query, req.ClinicId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	resp := &pb.ListDoctorsResponse{}
+	for _, d := range doctors {
+		resp.Doctors = append(resp.Doctors, &pb.Doctor{Id: d.id, Name: d.name, Specialization: d.specialization})
+	}
+	return resp, nil
+}
+
+func (s *server) SearchPatients(_ context.Context, req *pb.SearchPatientsRequest) (*pb.ListPatientsResponse, error) {
+	if req.Query == "" {
+		return &pb.ListPatientsResponse{}, nil
+	}
+	patients, err := s.store.searchPatients(req.Query)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	resp := &pb.ListPatientsResponse{}
+	for _, p := range patients {
+		resp.Patients = append(resp.Patients, &pb.Patient{Id: p.id, Name: p.name, Age: p.age})
+	}
+	return resp, nil
 }
 
 func main() {

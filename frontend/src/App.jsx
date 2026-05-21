@@ -1,184 +1,103 @@
-import { useState } from "react";
-
-const apiBase = "http://localhost:8080";
+import { useState, useEffect } from "react";
+import "./styles.css";
+import { api } from "./api";
+import { PatientForm } from "./components/PatientForm";
+import { DoctorForm } from "./components/DoctorForm";
+import { LinkDoctorForm } from "./components/LinkDoctorForm";
+import { ScheduleForm } from "./components/ScheduleForm";
+import { AppointmentFilter } from "./components/AppointmentFilter";
+import { AppointmentTable } from "./components/AppointmentTable";
 
 export default function App() {
-  const [patientName, setPatientName] = useState("");
-  const [patientAge, setPatientAge] = useState("");
-  const [patient, setPatient] = useState(null);
+  const [clinics, setClinics] = useState([]);
+  const [clinicId, setClinicId] = useState("");
+  const [doctors, setDoctors] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [appointments, setAppointments] = useState([]);
 
-  const [appointmentDoctor, setAppointmentDoctor] = useState("");
-  const [appointmentTime, setAppointmentTime] = useState("");
-  const [appointment, setAppointment] = useState(null);
+  const [filterDoctors, setFilterDoctors] = useState([]);
+  const [filterPatients, setFilterPatients] = useState([]);
 
-  const [appointmentID, setAppointmentID] = useState("");
-  const [status, setStatus] = useState(null);
-  const [updateStatusValue, setUpdateStatusValue] = useState("CONFIRMED");
-  const [error, setError] = useState("");
+  useEffect(() => {
+    api.getClinics().then(setClinics);
+  }, []);
 
-  async function createPatient(e) {
-    e.preventDefault();
-    setError("");
-    setStatus(null);
-
-    const response = await fetch(`${apiBase}/patients`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: patientName,
-        age: Number(patientAge),
-      }),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      setError(data.error || "failed to create patient");
+  useEffect(() => {
+    if (!clinicId) {
+      setDoctors([]);
+      setPatients([]);
       return;
     }
+    api.getClinicDoctors(clinicId).then(setDoctors);
+    api.getClinicPatients(clinicId).then(setPatients);
+  }, [clinicId]);
 
-    setPatient(data);
-  }
+  const refreshDoctors = () => api.getClinicDoctors(clinicId).then(setDoctors);
+  const refreshPatients = () =>
+    api.getClinicPatients(clinicId).then(setPatients);
 
-  async function scheduleAppointment(e) {
-    e.preventDefault();
-    setError("");
-    setStatus(null);
-
-    const patientID = patient?.id;
-    if (!patientID) {
-      setError("create a patient first");
+  const handleFilterClinicChange = (id) => {
+    if (!id) {
+      setFilterDoctors([]);
+      setFilterPatients([]);
       return;
     }
+    api.getClinicDoctors(id).then(setFilterDoctors);
+    api.getClinicPatients(id).then(setFilterPatients);
+  };
 
-    const response = await fetch(`${apiBase}/appointments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        patient_id: patientID,
-        doctor: appointmentDoctor,
-        scheduled_at: appointmentTime,
-      }),
-    });
+  const handleFilter = (params) =>
+    api.getAppointments(params).then(setAppointments);
 
-    const data = await response.json();
-    if (!response.ok) {
-      setError(data.error || "failed to schedule appointment");
-      return;
-    }
+  const handleScheduled = () => handleFilter({});
 
-    setAppointment(data);
-    setAppointmentID(data.id);
-  }
-
-  async function getStatus(e) {
-    e.preventDefault();
-    setError("");
-
-    const response = await fetch(
-      `${apiBase}/appointments/status?appointment_id=${encodeURIComponent(appointmentID)}`,
-    );
-    const data = await response.json();
-    if (!response.ok) {
-      setError(data.error || "failed to get status");
-      return;
-    }
-
-    setStatus(data);
-  }
-
-  async function updateStatus(e) {
-    e.preventDefault();
-    setError("");
-
-    const response = await fetch(`${apiBase}/appointments/status/update`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        appointment_id: appointmentID,
-        status: updateStatusValue,
-      }),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      setError(data.error || "failed to update status");
-      return;
-    }
-
-    setStatus(data);
-  }
+  const allDoctors = [
+    ...doctors,
+    ...filterDoctors.filter((d) => !doctors.find((x) => x.id === d.id)),
+  ];
+  const allPatients = [
+    ...patients,
+    ...filterPatients.filter((p) => !patients.find((x) => x.id === p.id)),
+  ];
 
   return (
-    <main className="page">
-      <div className="panel">
-        <h1>Hospital Management</h1>
+    <div className="app">
+      <h1>Hospital</h1>
 
-        <form onSubmit={createPatient} className="card">
-          <h2>Create Patient</h2>
-          <input
-            placeholder="Name"
-            value={patientName}
-            onChange={(e) => setPatientName(e.target.value)}
-          />
-          <input
-            type="number"
-            placeholder="Age"
-            value={patientAge}
-            onChange={(e) => setPatientAge(e.target.value)}
-          />
-          <button type="submit">Create</button>
-          {patient && <pre>{JSON.stringify(patient, null, 2)}</pre>}
-        </form>
-
-        <form onSubmit={scheduleAppointment} className="card">
-          <h2>Schedule Appointment</h2>
-          <input
-            placeholder="Doctor"
-            value={appointmentDoctor}
-            onChange={(e) => setAppointmentDoctor(e.target.value)}
-          />
-          <input
-            type="datetime-local"
-            value={appointmentTime}
-            onChange={(e) => setAppointmentTime(e.target.value)}
-          />
-          <button type="submit">Schedule</button>
-          {appointment && <pre>{JSON.stringify(appointment, null, 2)}</pre>}
-        </form>
-
-        <form onSubmit={getStatus} className="card">
-          <h2>Get Appointment Status</h2>
-          <input
-            placeholder="Appointment ID"
-            value={appointmentID}
-            onChange={(e) => setAppointmentID(e.target.value)}
-          />
-          <button type="submit">Get Status</button>
-          {status && <pre>{JSON.stringify(status, null, 2)}</pre>}
-        </form>
-
-        <form onSubmit={updateStatus} className="card">
-          <h2>Update Appointment Status</h2>
-          <input
-            placeholder="Appointment ID"
-            value={appointmentID}
-            onChange={(e) => setAppointmentID(e.target.value)}
-          />
-          <select
-            value={updateStatusValue}
-            onChange={(e) => setUpdateStatusValue(e.target.value)}
-          >
-            <option value="CONFIRMED">CONFIRMED</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
-            <option value="COMPLETED">COMPLETED</option>
-            <option value="CANCELLED">CANCELLED</option>
-          </select>
-          <button type="submit">Update Status</button>
-          {status && <pre>{JSON.stringify(status, null, 2)}</pre>}
-        </form>
-
-        {error && <p className="error">{error}</p>}
+      <div className="row">
+        <label>Clinic</label>
+        <select value={clinicId} onChange={(e) => setClinicId(e.target.value)}>
+          <option value="">select...</option>
+          {clinics.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
       </div>
-    </main>
+
+      <hr />
+
+      <PatientForm clinicId={clinicId} onAdded={refreshPatients} />
+      <DoctorForm clinicId={clinicId} onAdded={refreshDoctors} />
+      <LinkDoctorForm clinicId={clinicId} onLinked={refreshDoctors} />
+      <ScheduleForm clinicId={clinicId} onScheduled={handleScheduled} />
+
+      <hr />
+
+      <AppointmentFilter
+        clinics={clinics}
+        filterDoctors={filterDoctors}
+        filterPatients={filterPatients}
+        onClinicChange={handleFilterClinicChange}
+        onFilter={handleFilter}
+      />
+      <AppointmentTable
+        appointments={appointments}
+        clinics={clinics}
+        doctors={allDoctors}
+        patients={allPatients}
+      />
+    </div>
   );
 }

@@ -110,6 +110,14 @@ func (s *server) ScheduleAppointment(_ context.Context, req *pb.ScheduleAppointm
 		return nil, status.Errorf(codes.AlreadyExists, "doctor already has an appointment at that time")
 	}
 
+	pending, err := s.store.doctorHasPendingAppointment(req.DoctorId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	if pending {
+		return nil, status.Errorf(codes.FailedPrecondition, "doctor has a pending appointment — mark it completed first")
+	}
+
 	pConflict, err := s.store.patientConflict(req.PatientId, req.ScheduledAt)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "db error")

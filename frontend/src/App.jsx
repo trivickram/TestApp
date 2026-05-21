@@ -64,14 +64,14 @@ export default function App() {
     api.getAppointments(lastFilterParams).then(setAppointments);
   };
 
-  const allDoctors = [
-    ...doctors,
-    ...filterDoctors.filter((d) => !doctors.find((x) => x.id === d.id)),
-  ];
-  const allPatients = [
-    ...patients,
-    ...filterPatients.filter((p) => !patients.find((x) => x.id === p.id)),
-  ];
+  // Merge all loaded doctor/patient lists for name resolution in table
+  const merge = (a, b) => {
+    const map = new Map(a.map((x) => [x.id, x]));
+    b.forEach((x) => map.set(x.id, x));
+    return [...map.values()];
+  };
+  const allDoctors = merge(doctors, filterDoctors);
+  const allPatients = merge(patients, filterPatients);
 
   return (
     <div className="app">
@@ -94,7 +94,12 @@ export default function App() {
       <PatientForm clinicId={clinicId} onAdded={refreshPatients} />
       <DoctorForm clinicId={clinicId} onAdded={refreshDoctors} />
       <LinkDoctorForm clinicId={clinicId} onLinked={refreshDoctors} />
-      <ScheduleForm clinicId={clinicId} onScheduled={handleScheduled} />
+      <ScheduleForm
+        clinicId={clinicId}
+        doctors={doctors}
+        patients={patients}
+        onScheduled={handleScheduled}
+      />
 
       <hr />
 

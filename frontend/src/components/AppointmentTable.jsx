@@ -39,27 +39,17 @@ export function AppointmentTable({
               <td>{doctorName(a.doctor_id)}</td>
               <td>{patientName(a.patient_id)}</td>
               <td>{a.scheduled_at}</td>
-              <td>
-                <span className={`badge badge-${a.status.toLowerCase()}`}>
-                  {a.status}
-                </span>
-              </td>
+              <td>{a.status}</td>
               <td>
                 {a.status === "SCHEDULED" && (
-                  <span className="action-btns">
-                    <button
-                      className="btn-complete"
-                      onClick={() => onStatusChange(a.id, "COMPLETED")}
-                    >
-                      ✓ Complete
+                  <>
+                    <button onClick={() => onStatusChange(a.id, "COMPLETED")}>
+                      Complete
+                    </button>{" "}
+                    <button onClick={() => onStatusChange(a.id, "CANCELLED")}>
+                      Cancel
                     </button>
-                    <button
-                      className="btn-cancel"
-                      onClick={() => onStatusChange(a.id, "CANCELLED")}
-                    >
-                      ✕ Cancel
-                    </button>
-                  </span>
+                  </>
                 )}
               </td>
             </tr>

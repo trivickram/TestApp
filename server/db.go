@@ -177,6 +177,15 @@ func (s *store) listPatients() ([]patient, error) {
 	return out, rows.Err()
 }
 
+func (s *store) doctorHasPendingAppointment(doctorID int64) (bool, error) {
+	var count int
+	err := s.db.QueryRow(
+		"SELECT COUNT(*) FROM appointments WHERE doctor_id = ? AND status = 'SCHEDULED'",
+		doctorID,
+	).Scan(&count)
+	return count > 0, err
+}
+
 func (s *store) doctorConflict(doctorID int64, scheduledAt string) (bool, error) {
 	var count int
 	err := s.db.QueryRow(

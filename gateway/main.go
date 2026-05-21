@@ -40,6 +40,8 @@ func grpcErr(w http.ResponseWriter, err error) {
 		code = http.StatusNotFound
 	case codes.AlreadyExists:
 		code = http.StatusConflict
+	case codes.FailedPrecondition:
+		code = http.StatusUnprocessableEntity
 	}
 	writeJSON(w, code, map[string]string{"error": st.Message()})
 }

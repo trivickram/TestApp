@@ -2,11 +2,25 @@ import { useState } from "react";
 import { api } from "../api";
 import { Typeahead } from "./Typeahead";
 
-export function ScheduleForm({ clinicId, onScheduled }) {
+export function ScheduleForm({ clinicId, doctors, patients, onScheduled }) {
   const [doctor, setDoctor] = useState(null);
   const [patient, setPatient] = useState(null);
   const [time, setTime] = useState("");
   const [error, setError] = useState("");
+
+  const searchDoctors = (q) =>
+    Promise.resolve(
+      (doctors ?? []).filter((d) =>
+        d.name.toLowerCase().includes(q.toLowerCase()),
+      ),
+    );
+
+  const searchPatients = (q) =>
+    Promise.resolve(
+      (patients ?? []).filter((p) =>
+        p.name.toLowerCase().includes(q.toLowerCase()),
+      ),
+    );
 
   const submit = async (e) => {
     e.preventDefault();
@@ -52,7 +66,7 @@ export function ScheduleForm({ clinicId, onScheduled }) {
           </span>
         ) : (
           <Typeahead
-            search={api.searchDoctors}
+            search={searchDoctors}
             labelFn={(d) => `${d.name} — ${d.specialization}`}
             placeholder="search doctor..."
             onSelect={setDoctor}
@@ -68,7 +82,7 @@ export function ScheduleForm({ clinicId, onScheduled }) {
           </span>
         ) : (
           <Typeahead
-            search={api.searchPatients}
+            search={searchPatients}
             labelFn={(p) => `${p.name} (age ${p.age})`}
             placeholder="search patient..."
             onSelect={setPatient}

@@ -1,4 +1,10 @@
-export function AppointmentTable({ appointments, clinics, doctors, patients }) {
+export function AppointmentTable({
+  appointments,
+  clinics,
+  doctors,
+  patients,
+  onStatusChange,
+}) {
   const find = (list, id) => list.find((x) => x.id == id);
 
   const clinicName = (id) => find(clinics, id)?.name ?? id;
@@ -15,12 +21,13 @@ export function AppointmentTable({ appointments, clinics, doctors, patients }) {
           <th>Patient</th>
           <th>Time</th>
           <th>Status</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {appointments.length === 0 ? (
           <tr>
-            <td colSpan={6} className="empty">
+            <td colSpan={7} className="empty">
               no appointments
             </td>
           </tr>
@@ -32,7 +39,29 @@ export function AppointmentTable({ appointments, clinics, doctors, patients }) {
               <td>{doctorName(a.doctor_id)}</td>
               <td>{patientName(a.patient_id)}</td>
               <td>{a.scheduled_at}</td>
-              <td>{a.status}</td>
+              <td>
+                <span className={`badge badge-${a.status.toLowerCase()}`}>
+                  {a.status}
+                </span>
+              </td>
+              <td>
+                {a.status === "SCHEDULED" && (
+                  <span className="action-btns">
+                    <button
+                      className="btn-complete"
+                      onClick={() => onStatusChange(a.id, "COMPLETED")}
+                    >
+                      ✓ Complete
+                    </button>
+                    <button
+                      className="btn-cancel"
+                      onClick={() => onStatusChange(a.id, "CANCELLED")}
+                    >
+                      ✕ Cancel
+                    </button>
+                  </span>
+                )}
+              </td>
             </tr>
           ))
         )}

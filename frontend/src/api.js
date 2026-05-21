@@ -33,4 +33,11 @@ export const api = {
   linkDoctor: (clinicId, doctorId) =>
     post(`${BASE}/clinics/${clinicId}/doctors`, { doctor_id: doctorId }),
   scheduleAppointment: (data) => post(`${BASE}/appointments`, data),
+
+  updateAppointmentStatus: (id, status) =>
+    fetch(`${BASE}/appointments/${id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }),
 };

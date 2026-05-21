@@ -49,7 +49,20 @@ export default function App() {
   const handleFilter = (params) =>
     api.getAppointments(params).then(setAppointments);
 
-  const handleScheduled = () => handleFilter({});
+  const handleScheduled = () => handleFilterWithCache({});
+
+  const [lastFilterParams, setLastFilterParams] = useState({});
+
+  const handleFilterWithCache = (params) => {
+    setLastFilterParams(params);
+    return api.getAppointments(params).then(setAppointments);
+  };
+
+  const handleStatusChange = async (id, newStatus) => {
+    const res = await api.updateAppointmentStatus(id, newStatus);
+    if (!res.ok) return;
+    api.getAppointments(lastFilterParams).then(setAppointments);
+  };
 
   const allDoctors = [
     ...doctors,
@@ -90,13 +103,14 @@ export default function App() {
         filterDoctors={filterDoctors}
         filterPatients={filterPatients}
         onClinicChange={handleFilterClinicChange}
-        onFilter={handleFilter}
+        onFilter={handleFilterWithCache}
       />
       <AppointmentTable
         appointments={appointments}
         clinics={clinics}
         doctors={allDoctors}
         patients={allPatients}
+        onStatusChange={handleStatusChange}
       />
     </div>
   );

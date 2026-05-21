@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log"
 	"net"
 	"os"
@@ -174,6 +176,32 @@ func (s *server) SearchPatients(_ context.Context, req *pb.SearchPatientsRequest
 		resp.Patients = append(resp.Patients, &pb.Patient{Id: p.id, Name: p.name, Age: p.age})
 	}
 	return resp, nil
+}
+
+func (s *server) UpdateAppointmentStatus(_ context.Context, req *pb.UpdateAppointmentStatusRequest) (*pb.Appointment, error) {
+	if req.Id == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "id is required")
+	}
+	switch req.Status {
+	case "COMPLETED", "CANCELLED":
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "status must be COMPLETED or CANCELLED")
+	}
+	a, err := s.store.updateAppointmentStatus(req.Id, req.Status)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "appointment not found")
+		}
+		return nil, status.Errorf(codes.Internal, "db error")
+	}
+	return &pb.Appointment{
+		Id:          a.id,
+		ClinicId:    a.clinicID,
+		DoctorId:    a.doctorID,
+		PatientId:   a.patientID,
+		ScheduledAt: a.scheduledAt,
+		Status:      a.status,
+	}, nil
 }
 
 func main() {

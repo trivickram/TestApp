@@ -94,6 +94,11 @@ message ListAppointmentsResponse {
 	repeated Appointment appointments = 1;
 }
 
+message UpdateAppointmentStatusRequest {
+	int64 id = 1;
+	string status = 2;
+}
+
 service HospitalService {
 	rpc ListClinics(Empty) returns (ListClinicsResponse);
 	rpc CreatePatient(CreatePatientRequest) returns (Patient);
@@ -105,4 +110,5 @@ service HospitalService {
 	rpc ListAppointments(ListAppointmentsRequest) returns (ListAppointmentsResponse);
 	rpc SearchDoctors(SearchDoctorsRequest) returns (ListDoctorsResponse);
 	rpc SearchPatients(SearchPatientsRequest) returns (ListPatientsResponse);
+	rpc UpdateAppointmentStatus(UpdateAppointmentStatusRequest) returns (Appointment);
 }

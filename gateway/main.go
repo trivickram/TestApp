@@ -48,7 +48,7 @@ func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return
@@ -221,6 +221,29 @@ func (g *gateway) searchPatients(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp.Patients)
 }
 
+func (g *gateway) updateAppointmentStatus(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid appointment id"})
+		return
+	}
+	var body struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
+		return
+	}
+	ctx, cancel := rctx()
+	defer cancel()
+	resp, err := g.client.UpdateAppointmentStatus(ctx, &pb.UpdateAppointmentStatusRequest{Id: id, Status: body.Status})
+	if err != nil {
+		grpcErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
 func main() {
 	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -241,6 +264,7 @@ func main() {
 	mux.HandleFunc("GET /appointments", g.listAppointments)
 	mux.HandleFunc("GET /doctors", g.searchDoctors)
 	mux.HandleFunc("GET /patients", g.searchPatients)
+	mux.HandleFunc("PATCH /appointments/{id}/status", g.updateAppointmentStatus)
 
 	log.Println("gateway listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", withCORS(mux)))

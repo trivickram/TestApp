@@ -180,7 +180,7 @@ func (s *store) listPatients() ([]patient, error) {
 func (s *store) doctorConflict(doctorID int64, scheduledAt string) (bool, error) {
 	var count int
 	err := s.db.QueryRow(
-		"SELECT COUNT(*) FROM appointments WHERE doctor_id = ? AND scheduled_at = ?",
+		"SELECT COUNT(*) FROM appointments WHERE doctor_id = ? AND scheduled_at = ? AND status = 'SCHEDULED'",
 		doctorID, scheduledAt,
 	).Scan(&count)
 	return count > 0, err
@@ -189,10 +189,27 @@ func (s *store) doctorConflict(doctorID int64, scheduledAt string) (bool, error)
 func (s *store) patientConflict(patientID int64, scheduledAt string) (bool, error) {
 	var count int
 	err := s.db.QueryRow(
-		"SELECT COUNT(*) FROM appointments WHERE patient_id = ? AND scheduled_at = ?",
+		"SELECT COUNT(*) FROM appointments WHERE patient_id = ? AND scheduled_at = ? AND status = 'SCHEDULED'",
 		patientID, scheduledAt,
 	).Scan(&count)
 	return count > 0, err
+}
+
+func (s *store) updateAppointmentStatus(id int64, newStatus string) (*appointment, error) {
+	res, err := s.db.Exec("UPDATE appointments SET status = ? WHERE id = ?", newStatus, id)
+	if err != nil {
+		return nil, err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+	var a appointment
+	err = s.db.QueryRow(
+		"SELECT id, clinic_id, doctor_id, patient_id, DATE_FORMAT(scheduled_at, '%Y-%m-%dT%H:%i:%s'), status FROM appointments WHERE id = ?",
+		id,
+	).Scan(&a.id, &a.clinicID, &a.doctorID, &a.patientID, &a.scheduledAt, &a.status)
+	return &a, err
 }
 
 func (s *store) insertAppointment(clinicID, doctorID, patientID int64, scheduledAt string) (int64, error) {

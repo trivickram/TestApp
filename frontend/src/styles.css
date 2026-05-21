@@ -171,3 +171,54 @@ th {
   font-size: 14px;
   line-height: 1;
 }
+
+/* ---- appointment status badge ---- */
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.badge-scheduled {
+  background: #e8f0fe;
+  color: #1a56db;
+}
+.badge-completed {
+  background: #def7ec;
+  color: #057a55;
+}
+.badge-cancelled {
+  background: #fde8e8;
+  color: #c81e1e;
+}
+
+/* ---- action buttons in appointment table ---- */
+.action-btns {
+  display: inline-flex;
+  gap: 4px;
+}
+.btn-complete {
+  padding: 3px 8px;
+  font-size: 12px;
+  background: #def7ec;
+  border: 1px solid #84e1bc;
+  color: #057a55;
+  cursor: pointer;
+}
+.btn-complete:hover {
+  background: #bcf0da;
+}
+.btn-cancel {
+  padding: 3px 8px;
+  font-size: 12px;
+  background: #fde8e8;
+  border: 1px solid #f8b4b4;
+  color: #c81e1e;
+  cursor: pointer;
+}
+.btn-cancel:hover {
+  background: #fbd5d5;
+}

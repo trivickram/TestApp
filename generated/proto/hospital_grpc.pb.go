@@ -19,16 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	HospitalService_ListClinics_FullMethodName         = "/hospital.HospitalService/ListClinics"
-	HospitalService_CreatePatient_FullMethodName       = "/hospital.HospitalService/CreatePatient"
-	HospitalService_CreateDoctor_FullMethodName        = "/hospital.HospitalService/CreateDoctor"
-	HospitalService_LinkDoctorToClinic_FullMethodName  = "/hospital.HospitalService/LinkDoctorToClinic"
-	HospitalService_ListClinicDoctors_FullMethodName   = "/hospital.HospitalService/ListClinicDoctors"
-	HospitalService_ListClinicPatients_FullMethodName  = "/hospital.HospitalService/ListClinicPatients"
-	HospitalService_ScheduleAppointment_FullMethodName = "/hospital.HospitalService/ScheduleAppointment"
-	HospitalService_ListAppointments_FullMethodName    = "/hospital.HospitalService/ListAppointments"
-	HospitalService_SearchDoctors_FullMethodName       = "/hospital.HospitalService/SearchDoctors"
-	HospitalService_SearchPatients_FullMethodName      = "/hospital.HospitalService/SearchPatients"
+	HospitalService_ListClinics_FullMethodName             = "/hospital.HospitalService/ListClinics"
+	HospitalService_CreatePatient_FullMethodName           = "/hospital.HospitalService/CreatePatient"
+	HospitalService_CreateDoctor_FullMethodName            = "/hospital.HospitalService/CreateDoctor"
+	HospitalService_LinkDoctorToClinic_FullMethodName      = "/hospital.HospitalService/LinkDoctorToClinic"
+	HospitalService_ListClinicDoctors_FullMethodName       = "/hospital.HospitalService/ListClinicDoctors"
+	HospitalService_ListClinicPatients_FullMethodName      = "/hospital.HospitalService/ListClinicPatients"
+	HospitalService_ScheduleAppointment_FullMethodName     = "/hospital.HospitalService/ScheduleAppointment"
+	HospitalService_ListAppointments_FullMethodName        = "/hospital.HospitalService/ListAppointments"
+	HospitalService_SearchDoctors_FullMethodName           = "/hospital.HospitalService/SearchDoctors"
+	HospitalService_SearchPatients_FullMethodName          = "/hospital.HospitalService/SearchPatients"
+	HospitalService_UpdateAppointmentStatus_FullMethodName = "/hospital.HospitalService/UpdateAppointmentStatus"
 )
 
 // HospitalServiceClient is the client API for HospitalService service.
@@ -45,6 +46,7 @@ type HospitalServiceClient interface {
 	ListAppointments(ctx context.Context, in *ListAppointmentsRequest, opts ...grpc.CallOption) (*ListAppointmentsResponse, error)
 	SearchDoctors(ctx context.Context, in *SearchDoctorsRequest, opts ...grpc.CallOption) (*ListDoctorsResponse, error)
 	SearchPatients(ctx context.Context, in *SearchPatientsRequest, opts ...grpc.CallOption) (*ListPatientsResponse, error)
+	UpdateAppointmentStatus(ctx context.Context, in *UpdateAppointmentStatusRequest, opts ...grpc.CallOption) (*Appointment, error)
 }
 
 type hospitalServiceClient struct {
@@ -155,6 +157,16 @@ func (c *hospitalServiceClient) SearchPatients(ctx context.Context, in *SearchPa
 	return out, nil
 }
 
+func (c *hospitalServiceClient) UpdateAppointmentStatus(ctx context.Context, in *UpdateAppointmentStatusRequest, opts ...grpc.CallOption) (*Appointment, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Appointment)
+	err := c.cc.Invoke(ctx, HospitalService_UpdateAppointmentStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HospitalServiceServer is the server API for HospitalService service.
 // All implementations must embed UnimplementedHospitalServiceServer
 // for forward compatibility
@@ -169,6 +181,7 @@ type HospitalServiceServer interface {
 	ListAppointments(context.Context, *ListAppointmentsRequest) (*ListAppointmentsResponse, error)
 	SearchDoctors(context.Context, *SearchDoctorsRequest) (*ListDoctorsResponse, error)
 	SearchPatients(context.Context, *SearchPatientsRequest) (*ListPatientsResponse, error)
+	UpdateAppointmentStatus(context.Context, *UpdateAppointmentStatusRequest) (*Appointment, error)
 	mustEmbedUnimplementedHospitalServiceServer()
 }
 
@@ -205,6 +218,9 @@ func (UnimplementedHospitalServiceServer) SearchDoctors(context.Context, *Search
 }
 func (UnimplementedHospitalServiceServer) SearchPatients(context.Context, *SearchPatientsRequest) (*ListPatientsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchPatients not implemented")
+}
+func (UnimplementedHospitalServiceServer) UpdateAppointmentStatus(context.Context, *UpdateAppointmentStatusRequest) (*Appointment, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateAppointmentStatus not implemented")
 }
 func (UnimplementedHospitalServiceServer) mustEmbedUnimplementedHospitalServiceServer() {}
 
@@ -399,6 +415,24 @@ func _HospitalService_SearchPatients_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HospitalService_UpdateAppointmentStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAppointmentStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HospitalServiceServer).UpdateAppointmentStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HospitalService_UpdateAppointmentStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HospitalServiceServer).UpdateAppointmentStatus(ctx, req.(*UpdateAppointmentStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HospitalService_ServiceDesc is the grpc.ServiceDesc for HospitalService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -445,6 +479,10 @@ var HospitalService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SearchPatients",
 			Handler:    _HospitalService_SearchPatients_Handler,
+		},
+		{
+			MethodName: "UpdateAppointmentStatus",
+			Handler:    _HospitalService_UpdateAppointmentStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

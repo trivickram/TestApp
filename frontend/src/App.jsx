@@ -7,6 +7,7 @@ import { LinkDoctorForm } from "./components/LinkDoctorForm";
 import { ScheduleForm } from "./components/ScheduleForm";
 import { AppointmentFilter } from "./components/AppointmentFilter";
 import { AppointmentTable } from "./components/AppointmentTable";
+import { ConsultationPad } from "./components/ConsultationPad";
 
 export default function App() {
   const [clinics, setClinics] = useState([]);
@@ -64,6 +65,9 @@ export default function App() {
     api.getAppointments(lastFilterParams).then(setAppointments);
   };
 
+  const [consultAppt, setConsultAppt] = useState(null);
+  const handleConsult = (appt) => setConsultAppt(appt);
+
   // Merge all loaded doctor/patient lists for name resolution in table
   const merge = (a, b) => {
     const map = new Map(a.map((x) => [x.id, x]));
@@ -116,7 +120,23 @@ export default function App() {
         doctors={allDoctors}
         patients={allPatients}
         onStatusChange={handleStatusChange}
+        onConsult={handleConsult}
       />
+
+      {consultAppt && (
+        <ConsultationPad
+          appointment={consultAppt}
+          doctorName={
+            allDoctors.find((d) => d.id == consultAppt.doctor_id)?.name ??
+            consultAppt.doctor_id
+          }
+          patientName={
+            allPatients.find((p) => p.id == consultAppt.patient_id)?.name ??
+            consultAppt.patient_id
+          }
+          onClose={() => setConsultAppt(null)}
+        />
+      )}
     </div>
   );
 }

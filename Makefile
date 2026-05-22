@@ -1,15 +1,19 @@
-DB_DSN ?= root:Password@123@tcp(localhost:3306)/hospital?parseTime=true
+DB_DSN   ?= root:Password@123@tcp(localhost:3306)/hospital?parseTime=true
+MONGO_URI ?= mongodb://localhost:27017
 
-.PHONY: server gateway frontend proto seed init kill all
+.PHONY: server gateway frontend proto seed init kill mongo all
 
 server:
-	DB_DSN="$(DB_DSN)" go run ./server/
+	DB_DSN="$(DB_DSN)" MONGO_URI="$(MONGO_URI)" go run ./server/
 
 gateway:
 	go run ./gateway/
 
 frontend:
 	cd frontend && npm run dev
+
+mongo:
+	brew services start mongodb/brew/mongodb-community@8.0
 
 proto:
 	protoc \
@@ -30,6 +34,6 @@ kill:
 	-lsof -ti:50051 -ti:8080 | xargs kill -9 2>/dev/null
 
 all: kill
-	DB_DSN="$(DB_DSN)" go run ./server/ &
+	DB_DSN="$(DB_DSN)" MONGO_URI="$(MONGO_URI)" go run ./server/ &
 	go run ./gateway/ &
 	cd frontend && npm run dev

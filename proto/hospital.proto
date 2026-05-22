@@ -99,6 +99,33 @@ message UpdateAppointmentStatusRequest {
 	string status = 2;
 }
 
+message Consultation {
+	string id = 1;
+	int64 appointment_id = 2;
+	int64 doctor_id = 3;
+	int64 patient_id = 4;
+	int64 clinic_id = 5;
+	string symptoms = 6;
+	string prescription = 7;
+	string notes = 8;
+	string created_at = 9;
+	string updated_at = 10;
+}
+
+message SaveConsultationRequest {
+	int64 appointment_id = 1;
+	int64 doctor_id = 2;
+	int64 patient_id = 3;
+	int64 clinic_id = 4;
+	string symptoms = 5;
+	string prescription = 6;
+	string notes = 7;
+}
+
+message GetConsultationRequest {
+	int64 appointment_id = 1;
+}
+
 service HospitalService {
 	rpc ListClinics(Empty) returns (ListClinicsResponse);
 	rpc CreatePatient(CreatePatientRequest) returns (Patient);
@@ -111,4 +138,6 @@ service HospitalService {
 	rpc SearchDoctors(SearchDoctorsRequest) returns (ListDoctorsResponse);
 	rpc SearchPatients(SearchPatientsRequest) returns (ListPatientsResponse);
 	rpc UpdateAppointmentStatus(UpdateAppointmentStatusRequest) returns (Appointment);
+	rpc SaveConsultation(SaveConsultationRequest) returns (Consultation);
+	rpc GetConsultation(GetConsultationRequest) returns (Consultation);
 }

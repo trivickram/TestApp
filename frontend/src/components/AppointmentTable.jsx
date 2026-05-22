@@ -4,6 +4,7 @@ export function AppointmentTable({
   doctors,
   patients,
   onStatusChange,
+  onConsult,
 }) {
   const find = (list, id) => list.find((x) => x.id == id);
 
@@ -48,8 +49,12 @@ export function AppointmentTable({
                     </button>{" "}
                     <button onClick={() => onStatusChange(a.id, "CANCELLED")}>
                       Cancel
-                    </button>
+                    </button>{" "}
+                    <button onClick={() => onConsult(a)}>Consult</button>
                   </>
+                )}
+                {a.status === "COMPLETED" && (
+                  <button onClick={() => onConsult(a)}>View Notes</button>
                 )}
               </td>
             </tr>

@@ -40,4 +40,9 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     }),
+
+  saveConsultation: (data) => post(`${BASE}/consultations`, data),
+
+  getConsultation: (appointmentId) =>
+    fetch(`${BASE}/appointments/${appointmentId}/consultation`),
 };

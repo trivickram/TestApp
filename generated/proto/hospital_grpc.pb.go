@@ -30,6 +30,8 @@ const (
 	HospitalService_SearchDoctors_FullMethodName           = "/hospital.HospitalService/SearchDoctors"
 	HospitalService_SearchPatients_FullMethodName          = "/hospital.HospitalService/SearchPatients"
 	HospitalService_UpdateAppointmentStatus_FullMethodName = "/hospital.HospitalService/UpdateAppointmentStatus"
+	HospitalService_SaveConsultation_FullMethodName        = "/hospital.HospitalService/SaveConsultation"
+	HospitalService_GetConsultation_FullMethodName         = "/hospital.HospitalService/GetConsultation"
 )
 
 // HospitalServiceClient is the client API for HospitalService service.
@@ -47,6 +49,8 @@ type HospitalServiceClient interface {
 	SearchDoctors(ctx context.Context, in *SearchDoctorsRequest, opts ...grpc.CallOption) (*ListDoctorsResponse, error)
 	SearchPatients(ctx context.Context, in *SearchPatientsRequest, opts ...grpc.CallOption) (*ListPatientsResponse, error)
 	UpdateAppointmentStatus(ctx context.Context, in *UpdateAppointmentStatusRequest, opts ...grpc.CallOption) (*Appointment, error)
+	SaveConsultation(ctx context.Context, in *SaveConsultationRequest, opts ...grpc.CallOption) (*Consultation, error)
+	GetConsultation(ctx context.Context, in *GetConsultationRequest, opts ...grpc.CallOption) (*Consultation, error)
 }
 
 type hospitalServiceClient struct {
@@ -167,6 +171,26 @@ func (c *hospitalServiceClient) UpdateAppointmentStatus(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *hospitalServiceClient) SaveConsultation(ctx context.Context, in *SaveConsultationRequest, opts ...grpc.CallOption) (*Consultation, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Consultation)
+	err := c.cc.Invoke(ctx, HospitalService_SaveConsultation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hospitalServiceClient) GetConsultation(ctx context.Context, in *GetConsultationRequest, opts ...grpc.CallOption) (*Consultation, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Consultation)
+	err := c.cc.Invoke(ctx, HospitalService_GetConsultation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HospitalServiceServer is the server API for HospitalService service.
 // All implementations must embed UnimplementedHospitalServiceServer
 // for forward compatibility
@@ -182,6 +206,8 @@ type HospitalServiceServer interface {
 	SearchDoctors(context.Context, *SearchDoctorsRequest) (*ListDoctorsResponse, error)
 	SearchPatients(context.Context, *SearchPatientsRequest) (*ListPatientsResponse, error)
 	UpdateAppointmentStatus(context.Context, *UpdateAppointmentStatusRequest) (*Appointment, error)
+	SaveConsultation(context.Context, *SaveConsultationRequest) (*Consultation, error)
+	GetConsultation(context.Context, *GetConsultationRequest) (*Consultation, error)
 	mustEmbedUnimplementedHospitalServiceServer()
 }
 
@@ -221,6 +247,12 @@ func (UnimplementedHospitalServiceServer) SearchPatients(context.Context, *Searc
 }
 func (UnimplementedHospitalServiceServer) UpdateAppointmentStatus(context.Context, *UpdateAppointmentStatusRequest) (*Appointment, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateAppointmentStatus not implemented")
+}
+func (UnimplementedHospitalServiceServer) SaveConsultation(context.Context, *SaveConsultationRequest) (*Consultation, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveConsultation not implemented")
+}
+func (UnimplementedHospitalServiceServer) GetConsultation(context.Context, *GetConsultationRequest) (*Consultation, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConsultation not implemented")
 }
 func (UnimplementedHospitalServiceServer) mustEmbedUnimplementedHospitalServiceServer() {}
 
@@ -433,6 +465,42 @@ func _HospitalService_UpdateAppointmentStatus_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HospitalService_SaveConsultation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveConsultationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HospitalServiceServer).SaveConsultation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HospitalService_SaveConsultation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HospitalServiceServer).SaveConsultation(ctx, req.(*SaveConsultationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HospitalService_GetConsultation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetConsultationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HospitalServiceServer).GetConsultation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HospitalService_GetConsultation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HospitalServiceServer).GetConsultation(ctx, req.(*GetConsultationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HospitalService_ServiceDesc is the grpc.ServiceDesc for HospitalService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -483,6 +551,14 @@ var HospitalService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateAppointmentStatus",
 			Handler:    _HospitalService_UpdateAppointmentStatus_Handler,
+		},
+		{
+			MethodName: "SaveConsultation",
+			Handler:    _HospitalService_SaveConsultation_Handler,
+		},
+		{
+			MethodName: "GetConsultation",
+			Handler:    _HospitalService_GetConsultation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

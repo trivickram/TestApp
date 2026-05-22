@@ -68,7 +68,6 @@ export default function App() {
   const [consultAppt, setConsultAppt] = useState(null);
   const handleConsult = (appt) => setConsultAppt(appt);
 
-  // Merge all loaded doctor/patient lists for name resolution in table
   const merge = (a, b) => {
     const map = new Map(a.map((x) => [x.id, x]));
     b.forEach((x) => map.set(x.id, x));

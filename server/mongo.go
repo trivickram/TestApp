@@ -10,7 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-// consultationDoc is the MongoDB document shape.
 type consultationDoc struct {
 	ID            bson.ObjectID `bson:"_id,omitempty"`
 	AppointmentID int64         `bson:"appointment_id"`
@@ -28,7 +27,6 @@ type consultationStore struct {
 	col *mongo.Collection
 }
 
-// newConsultationStore connects to MongoDB and ensures the unique index on appointment_id.
 func newConsultationStore(uri string) (*consultationStore, error) {
 	client, err := mongo.Connect(options.Client().ApplyURI(uri))
 	if err != nil {
@@ -42,7 +40,6 @@ func newConsultationStore(uri string) (*consultationStore, error) {
 
 	col := client.Database("hospital_db").Collection("consultations")
 
-	// Ensure unique index on appointment_id so upsert is safe.
 	_, _ = col.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys:    bson.D{{Key: "appointment_id", Value: 1}},
 		Options: options.Index().SetUnique(true),
@@ -51,7 +48,6 @@ func newConsultationStore(uri string) (*consultationStore, error) {
 	return &consultationStore{col: col}, nil
 }
 
-// upsert inserts or updates the consultation for the given appointment.
 func (cs *consultationStore) upsert(ctx context.Context, doc consultationDoc) (*consultationDoc, error) {
 	doc.UpdatedAt = time.Now()
 
@@ -82,8 +78,6 @@ func (cs *consultationStore) upsert(ctx context.Context, doc consultationDoc) (*
 	return &result, nil
 }
 
-// findByAppointmentID fetches the consultation for a given appointment.
-// Returns mongo.ErrNoDocuments if none exists.
 func (cs *consultationStore) findByAppointmentID(ctx context.Context, appointmentID int64) (*consultationDoc, error) {
 	var doc consultationDoc
 	err := cs.col.FindOne(ctx, bson.M{"appointment_id": appointmentID}).Decode(&doc)
